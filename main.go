@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -166,6 +168,29 @@ func initDB() {
 		if strings.Contains(dsn, "supabase.co") && strings.Contains(dsn, ":5432") {
 			fmt.Println("🔧 Detected Supabase URL with port 5432. Switching to port 6543 for IPv4 compatibility...")
 			dsn = strings.ReplaceAll(dsn, ".supabase.co:5432", ".supabase.co:6543")
+		}
+
+		// Force IPv4 resolution to avoid "network is unreachable" on IPv6-only resolution
+		u, err := url.Parse(dsn)
+		if err == nil {
+			host := u.Hostname()
+			if host != "" {
+				ips, err := net.LookupIP(host)
+				if err == nil {
+					for _, ip := range ips {
+						if ip.To4() != nil {
+							fmt.Printf("🔧 Force-resolving %s -> %s (IPv4)\n", host, ip.String())
+							if u.Port() != "" {
+								u.Host = net.JoinHostPort(ip.String(), u.Port())
+							} else {
+								u.Host = ip.String()
+							}
+							dsn = u.String()
+							break
+						}
+					}
+				}
+			}
 		}
 
 		fmt.Println("☁️  Connecting to PostgreSQL...")
