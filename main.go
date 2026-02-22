@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -160,6 +161,13 @@ func initDB() {
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn != "" {
+		// Fix for Supabase IPv6/IPv4 connection issues on Render
+		// Supabase direct connection (5432) is IPv6 only. Port 6543 (Pooler) supports IPv4.
+		if strings.Contains(dsn, "supabase.co") && strings.Contains(dsn, ":5432") {
+			fmt.Println("🔧 Detected Supabase URL with port 5432. Switching to port 6543 for IPv4 compatibility...")
+			dsn = strings.ReplaceAll(dsn, ".supabase.co:5432", ".supabase.co:6543")
+		}
+
 		fmt.Println("☁️  Connecting to PostgreSQL...")
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	} else {
