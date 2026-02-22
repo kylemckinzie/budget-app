@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -163,17 +162,12 @@ func initDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn != "" {
 		// Force simple protocol for Supabase Transaction Pooler compatibility
-		u, errParse := url.Parse(dsn)
-		if errParse == nil {
-			q := u.Query()
-			q.Set("prefer_simple_protocol", "true")
-			u.RawQuery = q.Encode()
-			dsn = u.String()
-		} else if !strings.Contains(dsn, "prefer_simple_protocol") {
+		// We use string manipulation to avoid issues with special chars in passwords
+		if !strings.Contains(dsn, "default_query_exec_mode") {
 			if strings.Contains(dsn, "?") {
-				dsn += "&prefer_simple_protocol=true"
+				dsn += "&default_query_exec_mode=simple_protocol"
 			} else {
-				dsn += "?prefer_simple_protocol=true"
+				dsn += "?default_query_exec_mode=simple_protocol"
 			}
 		}
 
