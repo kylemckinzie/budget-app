@@ -81,6 +81,10 @@
                         <i class="fas fa-book"></i>
                         <span>Ma'lumotlar To'plami</span>
                     </button>
+                    <button class="menu-btn" onclick="openChangePasswordModal()" style="margin-top: 20px;">
+                        <i class="fas fa-key"></i>
+                        <span>Parolni O'zgartirish</span>
+                    </button>
                     <button class="menu-btn" onclick="resetDatabase()" style="margin-top: 20px; color: #e74c3c;">
                         <i class="fas fa-trash-alt"></i>
                         <span>Ma'lumotlarni Tozalash</span>
@@ -434,11 +438,34 @@
                     <label><i class="fas fa-lock"></i> Password:</label>
                     <input type="password" id="loginPassword" class="form-control" placeholder="Password">
                 </div>
-                <p style="text-align: center; margin: 10px 0; color: #666; font-size: 0.9em;">
-                    Login: <strong>test</strong> | Parol: <strong>test123</strong>
-                </p>
                 <button class="btn-primary" onclick="performLogin()" style="width: 100%; margin-top: 10px;">
                     <i class="fas fa-sign-in-alt"></i> Kirish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 9999;">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-key"></i>
+                <h2>Parolni O'zgartirish</h2>
+            </div>
+            <div class="login-body">
+                <div class="form-group">
+                    <label>Eski Parol:</label>
+                    <input type="password" id="oldPassword" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Yangi Parol:</label>
+                    <input type="password" id="newPassword" class="form-control">
+                </div>
+                <button class="btn-primary" onclick="performChangePassword()" style="width: 100%; margin-top: 10px;">
+                    Saqlash
+                </button>
+                <button class="btn-secondary" onclick="document.getElementById('changePasswordModal').style.display='none'" style="width: 100%; margin-top: 10px;">
+                    Bekor qilish
                 </button>
             </div>
         </div>

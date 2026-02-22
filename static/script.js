@@ -790,6 +790,47 @@ async function resetDatabase() {
     }
 }
 
+function openChangePasswordModal() {
+    const modal = document.getElementById('changePasswordModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+    }
+}
+
+async function performChangePassword() {
+    const oldPass = document.getElementById('oldPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+
+    if (!oldPass || !newPass) {
+        showAlert('Barcha maydonlarni to\'ldiring', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                old_password: oldPass,
+                new_password: newPass
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showAlert('✅ Parol muvaffaqiyatli yangilandi', 'success');
+            document.getElementById('changePasswordModal').style.display = 'none';
+        } else {
+            showAlert('❌ ' + result.message, 'error');
+        }
+    } catch (e) {
+        showAlert('Server xatosi', 'error');
+    }
+}
+
 // ==================== LOCALSTORAGE FALLBACK ====================
 
 function loadDataFromLocalStorage() {

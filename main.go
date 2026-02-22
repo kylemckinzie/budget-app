@@ -110,6 +110,12 @@ type NoteRequest struct {
 	UserID  uint   `json:"user_id"`
 }
 
+type ChangePasswordRequest struct {
+	UserID      uint   `json:"user_id"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
 // Global variables
 
 func main() {
@@ -127,6 +133,8 @@ func main() {
 	// Authentication routes
 	api.HandleFunc("/register", registerHandler).Methods("POST", "OPTIONS")
 	api.HandleFunc("/login", loginHandler).Methods("POST", "OPTIONS")
+	api.HandleFunc("/change-password", changePasswordHandler).Methods("POST", "OPTIONS")
+	api.HandleFunc("/reset-db", resetDBHandler).Methods("POST", "OPTIONS")
 
 	// Budget routes
 	api.HandleFunc("/budget", getBudgetHandler).Methods("GET", "OPTIONS")
@@ -208,9 +216,9 @@ func createTestData() {
 
 	if userCount == 0 {
 		testUser := User{
-			Username: "test",
-			Password: "test123",
-			Email:    "test@example.com",
+			Username: "sysadminUser",
+			Password: "superhardpassword",
+			Email:    "teeett",
 		}
 		db.Create(&testUser)
 		fmt.Println("✅ Test user created: test/test123")
@@ -223,7 +231,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, User-ID")
-
+		//commen as test
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -268,7 +276,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Username mavjudligini tekshirish
+	// Username mavjudligini tekshirishadfa
 	var existingUser User
 	if err := db.Where("username = ?", user.Username).First(&existingUser).Error; err == nil {
 		sendErrorResponse(w, "Username already exists", http.StatusConflict)
@@ -329,6 +337,72 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		"token":    fmt.Sprintf("token-%d", user.ID),
 	})
 }
+
+func changePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	var req ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	if err := db.First(&user, req.UserID).Error; err != nil {
+		sendErrorResponse(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	if user.Password != req.OldPassword {
+		sendErrorResponse(w, "Eski parol noto'g'ri", http.StatusUnauthorized)
+		return
+	}
+
+	user.Password = req.NewPassword
+	if err := db.Save(&user).Error; err != nil {
+		sendErrorResponse(w, "Parolni yangilab bo'lmadi", http.StatusInternalServerError)
+		return
+	}
+
+	sendSuccessResponse(w, "Parol muvaffaqiyatli yangilandi", nil)
+}
+
+func resetDBHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Execute deletions in a transaction
+	err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("DELETE FROM expenses").Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("DELETE FROM incomes").Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("DELETE FROM notes").Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("DELETE FROM budgets").Error; err != nil {
+			return err
+		}
+		// Users table is NOT deleted
+		return nil
+	})
+
+	if err != nil {
+		sendErrorResponse(w, "Failed to clean database: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	sendSuccessResponse(w, "Database cleaned successfully (Users preserved)", nil)
+}
+
 func getBudgetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
 		return
