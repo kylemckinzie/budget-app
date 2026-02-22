@@ -762,6 +762,34 @@ async function deleteNote(noteId) {
     }
 }
 
+async function resetDatabase() {
+    if (!confirm("⚠️ DIQQAT!\n\nBarcha kiritilgan ma'lumotlar (xarajatlar, tushumlar, eslatmalar) butunlay o'chiriladi.\n\nDavom etishni xohlaysizmi?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/reset-db`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authToken || ''
+            }
+        });
+        
+        // Even if backend fails (e.g. offline), we clear local storage
+        localStorage.clear();
+        
+        alert("✅ Barcha ma'lumotlar muvaffaqiyatli tozalandi.\nDastur qayta ishga tushmoqda...");
+        location.reload();
+        
+    } catch (error) {
+        console.error('Reset error:', error);
+        localStorage.clear();
+        alert("✅ Local ma'lumotlar tozalandi (Server bilan aloqa yo'q).");
+        location.reload();
+    }
+}
+
 // ==================== LOCALSTORAGE FALLBACK ====================
 
 function loadDataFromLocalStorage() {
