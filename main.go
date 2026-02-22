@@ -162,7 +162,9 @@ func initDB() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn != "" {
 		fmt.Println("☁️  Connecting to PostgreSQL...")
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			PrepareStmt: false, // Disable prepared statements for PgBouncer compatibility
+		})
 	} else {
 		fmt.Println("📂 Connecting to SQLite (Local)...")
 		db, err = gorm.Open(sqlite.Open("budget_new.db"), &gorm.Config{})
