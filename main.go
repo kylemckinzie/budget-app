@@ -161,6 +161,15 @@ func initDB() {
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn != "" {
+		// Force simple protocol for Supabase Transaction Pooler compatibility
+		if !strings.Contains(dsn, "prefer_simple_protocol") {
+			if strings.Contains(dsn, "?") {
+				dsn += "&prefer_simple_protocol=true"
+			} else {
+				dsn += "?prefer_simple_protocol=true"
+			}
+		}
+
 		fmt.Println("☁️  Connecting to PostgreSQL...")
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 			PrepareStmt: false, // Disable prepared statements for PgBouncer compatibility
