@@ -173,22 +173,16 @@ func initDB() {
 		// Force IPv4 resolution to avoid "network is unreachable" on IPv6-only resolution
 		u, err := url.Parse(dsn)
 		if err == nil {
-			host := u.Hostname()
-			if host != "" {
-				ips, err := net.LookupIP(host)
-				if err == nil {
-					for _, ip := range ips {
-						if ip.To4() != nil {
-							fmt.Printf("🔧 Force-resolving %s -> %s (IPv4)\n", host, ip.String())
-							if u.Port() != "" {
-								u.Host = net.JoinHostPort(ip.String(), u.Port())
-							} else {
-								u.Host = ip.String()
-							}
-							dsn = u.String()
-							break
-						}
-					}
+			if u.Host != "" {
+				fmt.Printf("🔧 Resolving %s for IPv4...\n", u.Host)
+				addr, resolveErr := net.ResolveTCPAddr("tcp4", u.Host)
+				if resolveErr == nil {
+					originalHost := u.Host
+					u.Host = addr.String() // addr.String() returns "ip:port"
+					dsn = u.String()
+					fmt.Printf("🔧 Force-resolved %s to %s (IPv4)\n", originalHost, u.Host)
+				} else {
+					fmt.Printf("⚠️ Could not force-resolve to IPv4: %v. Using original DSN.\n", resolveErr)
 				}
 			}
 		}
