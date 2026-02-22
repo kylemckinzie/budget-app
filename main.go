@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -163,30 +161,6 @@ func initDB() {
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn != "" {
-		// Fix for Supabase IPv6/IPv4 connection issues on Render
-		// Supabase direct connection (5432) is IPv6 only. Port 6543 (Pooler) supports IPv4.
-		if strings.Contains(dsn, "supabase.co") && strings.Contains(dsn, ":5432") {
-			fmt.Println("🔧 Detected Supabase URL with port 5432. Switching to port 6543 for IPv4 compatibility...")
-			dsn = strings.ReplaceAll(dsn, ".supabase.co:5432", ".supabase.co:6543")
-		}
-
-		// Force IPv4 resolution to avoid "network is unreachable" on IPv6-only resolution
-		u, err := url.Parse(dsn)
-		if err == nil {
-			if u.Host != "" {
-				fmt.Printf("🔧 Resolving %s for IPv4...\n", u.Host)
-				addr, resolveErr := net.ResolveTCPAddr("tcp4", u.Host)
-				if resolveErr == nil {
-					originalHost := u.Host
-					u.Host = addr.String() // addr.String() returns "ip:port"
-					dsn = u.String()
-					fmt.Printf("🔧 Force-resolved %s to %s (IPv4)\n", originalHost, u.Host)
-				} else {
-					fmt.Printf("⚠️ Could not force-resolve to IPv4: %v. Using original DSN.\n", resolveErr)
-				}
-			}
-		}
-
 		fmt.Println("☁️  Connecting to PostgreSQL...")
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	} else {
@@ -195,6 +169,11 @@ func initDB() {
 	}
 
 	if err != nil {
+		if strings.Contains(err.Error(), "network is unreachable") && strings.Contains(dsn, "supabase.co") {
+			log.Println("❌ CRITICAL ERROR: IPv6 Network Unreachable.")
+			log.Println("💡 TIP: You are using the 'Direct Connection' hostname which is IPv6-only.")
+			log.Println("👉 ACTION: Please update your DATABASE_URL in Render to use the 'Connection Pooler' hostname (e.g., aws-0-....pooler.supabase.com).")
+		}
 		log.Fatal("❌ Failed to connect to database:", err)
 	}
 

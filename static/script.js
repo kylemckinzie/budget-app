@@ -274,35 +274,11 @@ function checkMonthStartNotification() {
 // Dasturni ishga tushirish - YANGILANGAN
 async function initializeApp() {
     console.log('🚀 Dastur ishga tushmoqda...');
-    
-    // Kunlik tekshiruv (oy yangilanishi)
 
-    
-    // Avtomatik login qilish (test user)
-    await autoLogin();
-    
-    // Ma'lumotlarni yuklash
-    await loadBudgetData();
-    await loadExpensesData();
-    await loadNotesData();
-    
-    // UI ni yangilash
-    updateDashboard();
+    // The login form is displayed by default from HTML.
+    // We will wait for the user to click the login button.
+    // Event listeners can be set up early.
     setupEventListeners();
-    updateCharts();
-    
-    // Oylik statistika bo'limini qo'shish
-    addMonthlyStatsSection();
-    
-    // 🆕 YANGI: Oylar filterni qo'shish
-    addMonthFilterToStatistics();
-    
-    // 🆕 YANGI: Dastlabki ma'lumotlarni ko'rsatish
-    setTimeout(() => {
-        updateFilteredData();
-    }, 500);
-    
-    console.log('✅ Dastur tayyor!');
 }
 
 // Avtomatik login (test user)
@@ -519,6 +495,33 @@ function hideLoginForm() {
     }
 }
 
+async function initializePostLogin() {
+    console.log('✅ Login muvaffaqiyatli. Ma\'lumotlar yuklanmoqda...');
+
+    // Ma'lumotlarni yuklash
+    await loadBudgetData();
+    await loadExpensesData();
+    await loadNotesData();
+
+    // UI ni yangilash
+    updateDashboard();
+    updateCharts();
+
+    // Oylik statistika bo'limini qo'shish (agar yo'q bo'lsa)
+    const statsSection = document.getElementById('statistics');
+    if (statsSection && !statsSection.querySelector('.month-filter-section')) {
+        addMonthlyStatsSection();
+        addMonthFilterToStatistics();
+    }
+
+    // Dastlabki ma'lumotlarni ko'rsatish
+    setTimeout(() => {
+        updateFilteredData();
+    }, 500);
+
+    console.log('✅ Dastur to\'liq yuklandi!');
+}
+
 async function performLogin() {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
@@ -541,8 +544,8 @@ async function performLogin() {
             currentUser = { id: result.data.user_id, username: result.data.username };
             authToken = result.data.token;
             hideLoginForm();
-            initializeApp(); // Reload data
-            showAlert('✅ Xush kelibsiz!', 'success');
+            await initializePostLogin(); // Load data and setup UI after login
+            showAlert(`✅ Xush kelibsiz, ${currentUser.username}!`, 'success');
         } else {
             showAlert('❌ Login yoki parol xato!', 'error');
         }
