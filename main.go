@@ -12,6 +12,7 @@ import (
 
 	"github.com/glebarez/sqlite"
 	"github.com/gorilla/mux"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -157,8 +158,15 @@ func main() {
 func initDB() {
 	var err error
 
-	// SQLite database ochish
-	db, err = gorm.Open(sqlite.Open("budget_new.db"), &gorm.Config{})
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn != "" {
+		fmt.Println("☁️  Connecting to PostgreSQL...")
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	} else {
+		fmt.Println("📂 Connecting to SQLite (Local)...")
+		db, err = gorm.Open(sqlite.Open("budget_new.db"), &gorm.Config{})
+	}
+
 	if err != nil {
 		log.Fatal("❌ Failed to connect to database:", err)
 	}

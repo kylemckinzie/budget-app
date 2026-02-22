@@ -291,9 +291,6 @@ async function initializeApp() {
     setupEventListeners();
     updateCharts();
     
-    // Login form ni yashirish
-    hideLoginForm();
-    
     // Oylik statistika bo'limini qo'shish
     addMonthlyStatsSection();
     
@@ -330,6 +327,7 @@ async function autoLogin() {
                 username: result.data.username
             };
             authToken = result.data.token;
+            hideLoginForm(); // Hide only on success
             console.log('✅ Login successful:', currentUser);
         } else {
             await createTestUser();
@@ -364,6 +362,7 @@ async function createTestUser() {
             };
             authToken = `token-${result.data.user_id}`;
             console.log('✅ User created:', currentUser);
+            hideLoginForm();
             await autoLogin();
         }
     } catch (error) {
@@ -513,6 +512,38 @@ function hideLoginForm() {
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.style.display = 'none';
+    }
+}
+
+async function performLogin() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        showAlert('Iltimos, barcha maydonlarni to\'ldiring!', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentUser = { id: result.data.user_id, username: result.data.username };
+            authToken = result.data.token;
+            hideLoginForm();
+            initializeApp(); // Reload data
+            showAlert('✅ Xush kelibsiz!', 'success');
+        } else {
+            showAlert('❌ Login yoki parol xato!', 'error');
+        }
+    } catch (error) {
+        showAlert('❌ Server bilan bog\'lanishda xatolik', 'error');
     }
 }
 
@@ -1916,6 +1947,24 @@ mainStyle.textContent = `
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         margin: 20px auto;
         max-width: 400px;
+    }
+    
+    .login-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .login-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .login-header i {
+        font-size: 4em;
+        color: #3498db;
+        margin-bottom: 15px;
     }
     
     /* Oylik statistika stillari */

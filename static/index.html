@@ -413,6 +413,30 @@
         </div>
     </div>
 
+    <!-- Login Modal -->
+    <div id="loginForm" class="modal-overlay" style="display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 9999;">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-user-circle"></i>
+                <h2>Tizimga Kirish</h2>
+                <p>Davom etish uchun loginingizni kiriting</p>
+            </div>
+            <div class="login-body">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username:</label>
+                    <input type="text" id="loginUsername" class="form-control" placeholder="Username" value="test">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password:</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Password" value="test123">
+                </div>
+                <button class="btn-primary" onclick="performLogin()" style="width: 100%; margin-top: 10px;">
+                    <i class="fas fa-sign-in-alt"></i> Kirish
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
