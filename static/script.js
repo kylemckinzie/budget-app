@@ -13,7 +13,7 @@ let notes = [];
 let expenseChart, budgetChart;
 
 // API sozlamalari
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = '/api';
 let currentUser = null;
 let authToken = null;
 
@@ -334,7 +334,11 @@ async function autoLogin() {
         }
     } catch (error) {
         console.error('❌ Login error:', error);
+        // Fallback to offline mode
+        currentUser = { id: 0, username: 'Offline' };
+        hideLoginForm();
         loadDataFromLocalStorage();
+        showAlert('⚠️ Server bilan aloqa yo\'q. Offline rejim ishga tushdi.', 'warning');
     }
 }
 
@@ -631,7 +635,7 @@ async function addIncome() {
         }
     } catch (error) {
         console.error('Add income error:', error);
-        showAlert('Server xatosi! (Console ko\'ring)', 'error');
+        addIncomeToLocalStorage(parseFloat(amountInput.value), typeSelect.value);
     }
 }
 
@@ -677,7 +681,10 @@ async function addExpense() {
         } else {
             showAlert(result.message, 'error');
         }
-    } catch (e) { showAlert('Server bilan bog\'lanishda xato', 'error'); }
+    } catch (e) { 
+        console.error('Add expense error:', e);
+        addExpenseToLocalStorage(category, amount, desc);
+    }
 }
 
 async function addNote() {
